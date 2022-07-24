@@ -2,44 +2,34 @@ import React, { useEffect, useState } from "react";
 
 import Tasks from "./components/Tasks/Tasks";
 import NewTask from "./components/NewTask/NewTask";
+import useHttp from "./hooks/use-http";
 
 function App() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [tasks, setTasks] = useState([]);
 
-  const fetchTasks = async (taskText) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Insert database url
-      const response = await fetch(
-        "https://react-http-4b011-default-rtdb.europe-west1.firebasedatabase.app///tasks.json"
-      );
+  // sendRequest is renamed to fetchTasks
+  const { isLoading, error, sendRequest: fetchTasks } = useHttp();
 
-      if (!response.ok) {
-        throw new Error("Request failed!");
-      }
-
-      const data = await response.json();
-
+  useEffect(() => {
+    const transformTasks = (taskObject) => {
       const loadedTasks = [];
 
-      for (const taskKey in data) {
-        loadedTasks.push({ id: taskKey, text: data[taskKey].text });
+      for (const taskKey in taskObject) {
+        loadedTasks.push({ id: taskKey, text: taskObject[taskKey].text });
       }
 
       setTasks(loadedTasks);
-    } catch (err) {
-      setError(err.message || "Something went wrong!");
-    }
-    setIsLoading(false);
-  };
+    };
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+    fetchTasks(
+      {
+        url: "https://react-http-4b011-default-rtdb.europe-west1.firebasedatabase.app///tasks.json",
+      },
+      transformTasks
+    );
+  }, [fetchTasks]);
 
+  // Handler to add new tasks
   const taskAddHandler = (task) => {
     setTasks((prevTasks) => prevTasks.concat(task));
   };
